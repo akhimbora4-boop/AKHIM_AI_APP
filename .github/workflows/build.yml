@@ -9,22 +9,21 @@ on:
 jobs:
   build-android:
     name: Build Android APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Build with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        id: buildozer
+        uses: digineo/buildozer-action@v1.2.0
         with:
           workdir: .
-          buildozer_version: stable
+          buildozer_version: master
           command: buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: AKHIM-AI-APK
-          path: ${{ steps.buildozer.outputs.filename }}
+          path: bin/*.apk
