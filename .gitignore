@@ -1,0 +1,8 @@
+.buildozer/
+bin/
+__pycache__/
+*.pyc
+config/settings.py
+config/settings.local.py
+config/settings.local.py
+*.db
