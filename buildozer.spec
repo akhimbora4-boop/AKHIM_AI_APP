@@ -6,7 +6,7 @@ package.domain = org.akhim.ai
 source.dir =.
 source.include_exts = py,png,jpg,kv,atlas,json
 version = 0.1
-requirements = python3,kivy,requests,beautifulsoup4,soupsieve
+requirements = python3,kivy,requests==2.31.0,beautifulsoup4==4.12.3,soupsieve==2.5,charset-normalizer==3.3.2
 orientation = portrait
 fullscreen = 0
 
