@@ -19,6 +19,8 @@ android.accept_sdk_license = True
 android.allow_backup = True
 android.logcat_filters = *:S python:D
 
+p4a.branch = develop
+
 # iOS
 ios.kivy_ios_url = https://github.com/kivy/kivy-ios
 ios.kivy_ios_branch = master
