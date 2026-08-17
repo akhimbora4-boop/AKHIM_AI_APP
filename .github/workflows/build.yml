@@ -7,15 +7,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    
+
+    - name: Clear Buildozer Cache
+      run: rm -rf .buildozer
+
     - name: Set up JDK 17
       uses: actions/setup-java@v4
-- name: Clear Buildozer Cache
-  run: rm -rf.buildozer
       with:
         java-version: '17'
         distribution: 'temurin'
-    
+
     - name: Install dependencies
       run: |
         sudo apt update
@@ -33,7 +34,7 @@ jobs:
         GROQ_API_KEYS: ${{ secrets.GROQ_API_KEYS }}
         OPENROUTER_API_KEYS: ${{ secrets.OPENROUTER_API_KEYS }}
         MISTRAL_API_KEYS: ${{ secrets.MISTRAL_API_KEYS }}
-    
+
     - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
