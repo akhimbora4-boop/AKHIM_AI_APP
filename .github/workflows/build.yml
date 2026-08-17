@@ -10,14 +10,16 @@ on:
 
 jobs:
   build-android:
-    runs-on: ubuntu-latest
+    # ইয়াত ubuntu-latest ৰ সলনি ubuntu-22.04 কৰা হ'ল যাতে libtinfo5 পেকেজটো বিচাৰি পায়
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        # ইয়াত v3 ৰ সলনি v4 কৰা হ'ল যাতে আগৰ Warning টো নাহে
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
