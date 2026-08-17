@@ -41,9 +41,7 @@ version = 0.1
 # version.filename = %(source.dir)s/main.py
 
 # (list) Application requirements
-# comma separated e.g. requirements = python3,kivy,requests,beautifulsoup4
-requirements = python3,kivy,requests,beautifulsoup4
-
+requirements = python3,kivy,beautifulsoup4,soupsieve
 # (str) Custom source folders for requirements
 # Sets custom source for any requirements with recipes
 # requirements.source.kivy = ../../kivy
