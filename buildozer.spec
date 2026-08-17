@@ -3,10 +3,11 @@
 title = AKHIM AI
 package.name = akhimai
 package.domain = org.akhim.ai
-source.dir =.
+source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 version = 0.1
-requirements = python3,kivy,beautifulsoup4==4.12.3,soupsieve==2.5
+# ইয়াত charset-normalizer==3.3.2 যোগ কৰা হৈছে
+requirements = python3,kivy,beautifulsoup4==4.12.3,soupsieve==2.5,charset-normalizer==3.3.2
 orientation = portrait
 fullscreen = 0
 
