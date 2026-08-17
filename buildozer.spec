@@ -7,8 +7,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 version = 0.1
 # ইয়াত Python ৰ সুস্থিৰ ভাৰ্চন 3.11.4 দিয়া হৈছে আৰু charset-normalizer আঁতৰোৱা হৈছে
-requirements = python3==3.11.4,kivy,beautifulsoup4==4.12.3,soupsieve==2.5
-orientation = portrait
+requirements = python3==3.11.4,hostpython3==3.11.4,kivy,beautifulsoup4==4.12.3,soupsieve==2.5
 fullscreen = 0
 
 # Android
