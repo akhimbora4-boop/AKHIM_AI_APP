@@ -4,15 +4,16 @@ title = AKHIM AI
 package.name = akhimai
 package.domain = org.akhim.ai
 source.dir =.
-source.include_exts = py,png,jpg,kv,atlas
+source.include_exts = py,png,jpg,kv,atlas,json
 version = 0.1
-requirements = python3,kivy,requests,beautifulsoup4,soupsieve
+requirements = python3==3.10.13,kivy,requests,beautifulsoup4,soupsieve
 orientation = portrait
 fullscreen = 0
 
 # Android
 android.api = 33
 android.minapi = 24
+android.ndk = 25b
 android.archs = arm64-v8a, armeabi-v7a
 android.accept_sdk_license = True
 android.allow_backup = True
@@ -30,4 +31,4 @@ log_level = 2
 warn_on_root = 1
 
 p4a.bootstrap = sdl2
-p4a.extra_args = --skip-cleanup
+p4a.extra_args = --skip-cleanup --force-build
