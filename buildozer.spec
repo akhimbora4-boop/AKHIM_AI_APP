@@ -28,3 +28,6 @@ ios.codesign.allowed = false
 [buildozer]
 log_level = 2
 warn_on_root = 1
+
+p4a.bootstrap = sdl2
+p4a.extra_args = --skip-cleanup
