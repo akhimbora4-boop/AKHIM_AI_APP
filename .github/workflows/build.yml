@@ -22,24 +22,25 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # ইয়াত Cache Key টো v2 কৰা হ'ল আৰু restore-keys আঁতৰাই দিয়া হ'ল যাতে পুৰণি বেয়া ফাইল নাহে
+      # পুৰণি সকলো বেয়া Cache আঁতৰাবলৈ v4 ব্যৱহাৰ কৰা হ'ল
       - name: Cache Buildozer files
         uses: actions/cache@v4
         with:
           path: |
             ~/.buildozer
             .buildozer
-          key: ${{ runner.os }}-buildozer-v2-${{ hashFiles('buildozer.spec') }}
+          key: ${{ runner.os }}-buildozer-v4-${{ hashFiles('buildozer.spec') }}
 
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
-      - name: Install Buildozer
+      - name: Setup Python Environment (Fix for PIP Error)
         run: |
-          pip install --upgrade Cython==0.29.33 virtualenv
-          pip install buildozer
+          # ইয়াত আমি pip আৰু virtualenv-ৰ নিৰ্দিষ্ট আৰু সুস্থিৰ ভাৰ্চন দিছোঁ যাতে open_rich_spinner ৰ error নাহে
+          python3 -m pip install --upgrade pip==23.3.2 setuptools virtualenv==20.21.0
+          python3 -m pip install --upgrade Cython==0.29.33 buildozer
 
       - name: Build APK
         run: |
