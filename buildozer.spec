@@ -7,7 +7,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 version = 0.1
 # ইয়াত Python ৰ ভাৰ্চন 3.11.5 কৰা হ'ল যাতে পুৰণি বেয়া Cache টো আঁতৰি যায়
-requirements = python3==3.11.5,hostpython3==3.11.5,kivy==2.3.0,beautifulsoup4==4.12.3,soupsieve==2.5
+requirements = python3==3.10.14,hostpython3==3.10.14,kivy==2.3.0,beautifulsoup4==4.12.3,soupsieve==2.5
 fullscreen = 0
 
 # Android
