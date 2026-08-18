@@ -22,24 +22,24 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # পুৰণি সকলো বেয়া Cache আঁতৰাবলৈ v4 ব্যৱহাৰ কৰা হ'ল
+      # মোৰ ভুলৰ বাবে সোমোৱা পুৰণি বেয়া ফাইলবোৰ মচিবলৈ ইয়াত Cache v5 কৰা হ'ল
       - name: Cache Buildozer files
         uses: actions/cache@v4
         with:
           path: |
             ~/.buildozer
             .buildozer
-          key: ${{ runner.os }}-buildozer-v4-${{ hashFiles('buildozer.spec') }}
+          key: ${{ runner.os }}-buildozer-v5-${{ hashFiles('buildozer.spec') }}
 
       - name: Install dependencies
         run: |
           sudo apt update
           sudo apt install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
-      - name: Setup Python Environment (Fix for PIP Error)
+      - name: Setup Python Environment
         run: |
-          # ইয়াত আমি pip আৰু virtualenv-ৰ নিৰ্দিষ্ট আৰু সুস্থিৰ ভাৰ্চন দিছোঁ যাতে open_rich_spinner ৰ error নাহে
-          python3 -m pip install --upgrade pip==23.3.2 setuptools virtualenv==20.21.0
+          # মই আগতে দিয়া পুৰণি ভাৰ্চন আঁতৰাই একেবাৰে শেহতীয়া (Latest) ভাৰ্চন দিয়া হ'ল
+          python3 -m pip install --upgrade pip setuptools virtualenv
           python3 -m pip install --upgrade Cython==0.29.33 buildozer
 
       - name: Build APK
