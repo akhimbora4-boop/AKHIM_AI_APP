@@ -11,6 +11,9 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-22.04
+    # এইটোৱেই সেই ব্ৰহ্মাষ্ট্ৰ যিয়ে pip ক 24+ লৈ যোৱাত বাধা দিব
+    env:
+      PIP_CONSTRAINT: ${{ github.workspace }}/constraint.txt
 
     steps:
       - name: Checkout Repository
@@ -22,25 +25,27 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # পুৰণি বেয়া pip ৰ ফাইলবোৰ মচিবলৈ Cache v6 কৰা হ'ল
+      # ইয়াত আমি লক ফাইলটো তৈয়াৰ কৰিছোঁ
+      - name: Set pip constraint to bypass open_rich_spinner bug
+        run: echo "pip<24.0" > ${{ github.workspace }}/constraint.txt
+
+      # পুৰণি সকলো বেয়া ফাইল মচিবলৈ Cache v7 কৰা হ'ল
       - name: Cache Buildozer files
         uses: actions/cache@v4
         with:
           path: |
             ~/.buildozer
             .buildozer
-          key: ${{ runner.os }}-buildozer-v6-${{ hashFiles('buildozer.spec') }}
+          key: ${{ runner.os }}-buildozer-v7-${{ hashFiles('buildozer.spec') }}
 
       - name: Install dependencies
         run: |
           sudo apt update
-          # ইয়াত python3-venv টো যোগ কৰা হ'ল যাতে সি Ubuntu ৰ নিজা সুৰক্ষিত ছিষ্টেমটো ব্যৱহাৰ কৰে
           sudo apt install -y git zip unzip openjdk-17-jdk python3-pip python3-venv autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
       - name: Setup Python Environment
         run: |
-          # ইয়াত virtualenv টো একেবাৰে আঁতৰাই দিয়া হ'ল যাতে কোনো কাজিয়া নহয়
-          python3 -m pip install --upgrade pip setuptools
+          python3 -m pip install --upgrade "pip<24.0" setuptools
           python3 -m pip install --upgrade Cython==0.29.33 buildozer
 
       - name: Build APK
