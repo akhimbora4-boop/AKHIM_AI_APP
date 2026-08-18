@@ -1,45 +1,42 @@
-import threading
 from kivy.app import App
 from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.scrollview import ScrollView
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
+from kivy.uix.scrollview import ScrollView
 from kivy.clock import Clock
+from kivy.metrics import dp
 from kivy.core.window import Window
+from threading import Thread
+import os
 
+# ==========================================
+# AKHIM AI CORE IMPORTS
+# ==========================================
 from ai.gemini import GeminiAI
 from ai.groq import GroqAI
 from ai.openrouter import OpenRouterAI
 from ai.mistral import MistralAI
 from ai.manager import AIManager
-
-from config.settings import (
-    GEMINI_API_KEYS,
-    GROQ_API_KEYS,
-    OPENROUTER_API_KEYS,
-    MISTRAL_API_KEYS
-)
-
 from correction.question_corrector import QuestionCorrector
 from memory import Memory
-
 from research.web_search import WebSearch
 from research.analyzer import ResearchAnalyzer
 from research.decision import ResearchDecision
 from research.verifier import ResearchVerifier
 from research.freshness import ResearchFreshness
 from research.ranker import ResearchRanker
+from config.settings import (
+    GEMINI_API_KEYS, GROQ_API_KEYS, OPENROUTER_API_KEYS, MISTRAL_API_KEYS
+)
 
-# =================================
-# AI PROVIDERS & SETUP
-# =================================
-
+# Initialize AI Providers
 gemini = GeminiAI(GEMINI_API_KEYS)
 groq = GroqAI(GROQ_API_KEYS)
 openrouter = OpenRouterAI(OPENROUTER_API_KEYS)
 mistral = MistralAI(MISTRAL_API_KEYS)
 
+# Initialize Managers & Tools
 ai = AIManager(gemini, groq, openrouter, mistral)
 corrector = QuestionCorrector(ai)
 memory = Memory()
@@ -50,250 +47,125 @@ verifier = ResearchVerifier()
 freshness = ResearchFreshness()
 ranker = ResearchRanker()
 
+# GitHub Action ৰ পৰা অহা assamese.ttf ফণ্টটো বিচাৰি উলিওৱা
+FONT_PATH = "assamese.ttf" if os.path.exists("assamese.ttf") else None
 
-# =================================
-# KIVY APP CLASS
-# =================================
 
 class AkhimAIApp(App):
     def build(self):
-        # কীবৰ্ড ওলালে স্ক্ৰীণখন ওপৰলৈ উঠিবলৈ
+        # কীবৰ্ড ওলালে UI ওপৰলৈ উঠিবলৈ
         Window.softinput_mode = "below_target"
         
-        self.layout = BoxLayout(orientation='vertical', padding=10, spacing=10)
-        
-        # Chat History Screen
-        self.scroll = ScrollView(size_hint=(1, 0.88))
-        welcome_text = (
-            "[b]================================[/b]\n"
-            "[b]        AKHIM AI[/b]\n"
-            "[b]================================[/b]\n"
-            "Gemini + Groq + OpenRouter + Mistral\n"
-            "Web Research + AI Analysis\n"
-            "Type 'exit' to stop.\n"
-            "Type 'clear' to delete memory.\n\n"
-        )
-        self.chat_label = Label(
-            text=welcome_text,
+        # Dark theme background
+        Window.clearcolor = (0.05, 0.05, 0.08, 1) 
+
+        root = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(8))
+
+        # Header
+        header = Label(
+            text="[b][color=3498db]⚡[/color] AKHIM AI[/b]", 
+            markup=True, 
+            font_size=dp(22), 
             size_hint_y=None, 
-            markup=True,
-            halign="left",
-            valign="top"
+            height=dp(50)
         )
-        self.chat_label.bind(width=lambda *x: self.chat_label.setter('text_size')(self.chat_label, (self.chat_label.width, None)))
-        self.chat_label.bind(texture_size=self.chat_label.setter('size'))
-        self.scroll.add_widget(self.chat_label)
-        self.layout.add_widget(self.scroll)
+        root.add_widget(header)
 
-        # Input Area (Text Box & Send Button)
-        self.input_layout = BoxLayout(size_hint=(1, 0.12), spacing=10)
-        self.text_input = TextInput(hint_text="Ask AKHIM...", multiline=False)
-        self.text_input.bind(on_text_validate=self.send_message) # Enter টিপিলেও মেছেজ যাব
+        # Chat Scroll View
+        self.scroll = ScrollView(size_hint=(1, 0.83))
+        self.chat = Label(
+            text="[b]নমস্কাৰ! মই AKHIM AI।[/b]\nআপোনাক কি সহায় কৰিব পাৰোঁ?\n\n",
+            font_size=dp(16), markup=True, halign="left", valign="top",
+            size_hint_y=None, padding=(dp(10), dp(10)),
+            font_name=FONT_PATH if FONT_PATH else 'Roboto'
+        )
+        self.chat.bind(width=lambda *x: self.chat.setter('text_size')(self.chat, (self.chat.width - dp(20), None)))
+        self.chat.bind(texture_size=self.chat.setter("size"))
+        self.scroll.add_widget(self.chat)
+        root.add_widget(self.scroll)
+
+        # Input Area (Bottom)
+        bottom = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(8))
+        self.input_box = TextInput(
+            hint_text="Ask anything...", multiline=False, font_size=dp(16),
+            font_name=FONT_PATH if FONT_PATH else 'Roboto',
+            background_color=(0.15, 0.15, 0.18, 1),
+            foreground_color=(1, 1, 1, 1),
+            cursor_color=(1, 1, 1, 1),
+            padding=(dp(15), dp(15))
+        )
+        self.input_box.bind(on_text_validate=self.send_message)
         
-        self.send_button = Button(text="Send", size_hint=(0.25, 1))
-        self.send_button.bind(on_press=self.send_message)
+        self.send_btn = Button(
+            text="SEND", size_hint_x=None, width=dp(85), bold=True,
+            background_color=(0.18, 0.8, 0.44, 1),
+            color=(1, 1, 1, 1)
+        )
+        self.send_btn.bind(on_press=self.send_message)
 
-        self.input_layout.add_widget(self.text_input)
-        self.input_layout.add_widget(self.send_button)
-        self.layout.add_widget(self.input_layout)
+        bottom.add_widget(self.input_box)
+        bottom.add_widget(self.send_btn)
+        root.add_widget(bottom)
 
-        return self.layout
+        return root
 
     def send_message(self, instance):
-        question = self.text_input.text.strip()
-        if not question:
-            return
+        question = self.input_box.text.strip()
+        if not question: return
 
-        self.update_chat(f"\n[b]You:[/b] {question}")
-        self.text_input.text = ""
+        self.input_box.text = ""
+        self.input_box.disabled = True
+        self.send_btn.disabled = True
 
-        # AI-য়ে চিন্তা কৰি থাকোঁতে বুটাম আৰু বক্সটো বন্ধ কৰি ৰাখিব
-        self.text_input.disabled = True
-        self.send_button.disabled = True
+        self.chat.text += f"\n[b][color=3498db]You:[/color][/b] {question}\n\n[i][color=e67e22]AKHIM AI is processing...[/color][/i]\n"
+        Clock.schedule_once(lambda dt: setattr(self.scroll, 'scroll_y', 0), 0.1)
 
-        # AI প্ৰক্ৰিয়াটো Background Thread ত চলাব
-        threading.Thread(target=self.process_ai, args=(question,)).start()
+        Thread(target=self.process_question, args=(question,), daemon=True).start()
 
-    def update_chat(self, text):
-        self.chat_label.text += text
-        self.scroll.scroll_y = 0
-
-    def log_status(self, text):
-        # AI-ৰ Status বোৰ (যেনে Search, Verify) সৰুকৈ দেখুৱাব
-        Clock.schedule_once(lambda dt: self.update_chat(f"\n[i][color=aaaaaa]{text}[/color][/i]"))
-
-    def enable_input(self):
-        def _enable(dt):
-            self.text_input.disabled = False
-            self.send_button.disabled = False
-        Clock.schedule_once(_enable)
-
-    def process_ai(self, question):
-        # =================================
-        # EXIT
-        # =================================
-        if question.lower() in ["exit", "quit"]:
-            Clock.schedule_once(lambda dt: self.update_chat("\n[b]AKHIM AI:[/b] Goodbye!\n"))
-            Clock.schedule_once(lambda dt: App.get_running_app().stop(), 2)
-            return
-
-        # =================================
-        # CLEAR MEMORY
-        # =================================
-        if question.lower() == "clear":
-            try:
-                memory.clear()
-                Clock.schedule_once(lambda dt: self.update_chat("\n[b]AKHIM AI:[/b] Memory cleared.\n"))
-            except Exception as error:
-                self.log_status(f"[Memory clear failed: {error}]")
-            self.enable_input()
-            return
-
-        # =================================
-        # QUESTION CORRECTION
-        # =================================
+    def process_question(self, question):
         try:
+            if question.lower() in ["exit", "quit", "clear"]:
+                if question.lower() == "clear":
+                    memory.clear()
+                    Clock.schedule_once(lambda dt: self.update_chat_final("History cleared."))
+                else:
+                    Clock.schedule_once(lambda dt: App.get_running_app().stop(), 1)
+                return
+
             corrected_question = corrector.correct_question(question)
-        except Exception as error:
-            self.log_status(f"[Question correction failed: {error}]")
-            corrected_question = question
-
-        if not corrected_question:
-            corrected_question = question
-
-        if corrected_question.strip().lower() != question.strip().lower():
-            self.log_status(f"[Corrected: {corrected_question}]")
-
-        # =================================
-        # SAVE QUESTION
-        # =================================
-        try:
             memory.save("user", corrected_question)
-        except Exception as error:
-            self.log_status(f"[Memory save failed: {error}]")
-
-        # =================================
-        # HISTORY
-        # =================================
-        try:
-            history = memory.get_recent(20)
-        except Exception:
-            history = []
-
-        context = ""
-        for role, message in history:
-            if role == "user":
-                context += "User: " + message + "\n"
-            else:
-                context += "AKHIM AI: " + message + "\n"
-
-        # =================================
-        # RESEARCH DECISION
-        # =================================
-        try:
             needs_research = decision.needs_research(corrected_question)
-        except Exception as error:
-            self.log_status(f"[Research decision failed: {error}]")
-            needs_research = False
+            answer = ""
 
-        answer = ""
-
-        # =================================
-        # WEB RESEARCH
-        # =================================
-        if needs_research:
-            self.log_status("[Research required]")
-            self.log_status("[Searching web...]")
-
-            try:
-                results = search.research(corrected_question, max_results=5)
-            except Exception as error:
-                self.log_status(f"[Search failed: {error}]")
-                results = []
-
-            if results:
-                self.log_status(f"[Found {len(results)} sources]")
-                self.log_status("[Verifying sources...]")
-
-                try:
+            if needs_research:
+                results = search.research(corrected_question, max_results=3)
+                if results:
                     results = verifier.verify(results)
-                    confirmed = 0
-                    reported = 0
-                    uncertain = 0
-                    for result in results:
-                        status = str(result.get("status", "UNCERTAIN")).upper()
-                        if status == "CONFIRMED":
-                            confirmed += 1
-                        elif status == "REPORTED":
-                            reported += 1
-                        else:
-                            uncertain += 1
-                    self.log_status(f"[Verification: Confirmed={confirmed}, Reported={reported}, Uncertain={uncertain}]")
-                except Exception as error:
-                    self.log_status(f"[Verification failed: {error}]")
-
-                self.log_status("[Checking freshness...]")
-                try:
-                    results = freshness.enrich(results)
-                    results = freshness.filter_current(results)
-                    results = freshness.sort(results)
-                    today_count = 0
-                    recent_count = 0
-                    unknown_count = 0
-                    for result in results:
-                        fresh_status = str(result.get("freshness", "UNKNOWN")).upper()
-                        if fresh_status == "TODAY":
-                            today_count += 1
-                        elif fresh_status == "RECENT":
-                            recent_count += 1
-                        else:
-                            unknown_count += 1
-                    self.log_status(f"[Freshness: Today={today_count}, Recent={recent_count}, Unknown={unknown_count}]")
-                except Exception as error:
-                    self.log_status(f"[Freshness check failed: {error}]")
-
-                self.log_status("[Ranking sources...]")
-                try:
                     results = ranker.process(results)
-                    self.log_status(f"[Ranking complete: {len(results)} sources]")
-                except Exception as error:
-                    self.log_status(f"[Ranking failed: {error}]")
-
-                results = results[:7]
-
-                self.log_status("[Analyzing sources...]")
-                try:
                     answer = analyzer.analyze(corrected_question, results)
-                except Exception as error:
-                    self.log_status(f"[Research analysis failed: {error}]")
-                    answer = ""
-            else:
-                self.log_status("[No web sources found]")
 
-        # =================================
-        # DIRECT AI FALLBACK
-        # =================================
-        if not answer:
-            try:
-                answer = corrector.correct_and_answer(context + "\nCurrent question: " + corrected_question)
-            except Exception as error:
-                self.log_status(f"[AI answer failed: {error}]")
-                answer = "I could not generate an answer."
+            if not answer:
+                answer = corrector.correct_and_answer(f"Current question: {corrected_question}")
 
-        # =================================
-        # SAVE ANSWER
-        # =================================
-        try:
             memory.save("assistant", answer)
+            Clock.schedule_once(lambda dt: self.update_chat_final(answer))
+
         except Exception as error:
-            self.log_status(f"[Memory save failed: {error}]")
+            Clock.schedule_once(lambda dt: self.update_chat_final(f"Error: {str(error)}"))
 
-        # =================================
-        # FINAL ANSWER DISPLAY
-        # =================================
-        Clock.schedule_once(lambda dt: self.update_chat(f"\n\n[b]AKHIM AI:[/b]\n{answer}\n"))
-        self.enable_input()
+    def update_chat_final(self, answer):
+        current = self.chat.text
+        loading_text = "\n[i][color=e67e22]AKHIM AI is processing...[/color][/i]\n"
+        if loading_text in current: 
+            current = current.replace(loading_text, "")
+
+        self.chat.text = current + f"\n[b][color=2ecc71]AKHIM AI:[/color][/b]\n{answer}\n\n"
+        
+        self.input_box.disabled = False
+        self.send_btn.disabled = False
+        self.input_box.focus = True
+        Clock.schedule_once(lambda dt: setattr(self.scroll, 'scroll_y', 0), 0.1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     AkhimAIApp().run()
