@@ -6,8 +6,12 @@ package.domain = org.akhim.ai
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,json
 version = 0.1
-# ইয়াত Python ৰ ভাৰ্চন 3.11.5 কৰা হ'ল যাতে পুৰণি বেয়া Cache টো আঁতৰি যায়
-requirements = python3==3.10.14,hostpython3==3.10.14,kivy==2.3.0,beautifulsoup4==4.12.3,soupsieve==2.5
+
+# ইয়াত requests যোগ কৰা হ'ল (AI-ৰ লগত যোগাযোগ কৰিবলৈ)
+requirements = python3==3.10.14,hostpython3==3.10.14,kivy==2.3.0,beautifulsoup4==4.12.3,soupsieve==2.5,requests
+
+# এপটো থিয়কৈ (Portrait) চলাবলৈ
+orientation = portrait
 fullscreen = 0
 
 # Android
@@ -19,7 +23,8 @@ android.accept_sdk_license = True
 android.allow_backup = True
 android.logcat_filters = *:S python:D
 
-# p4a.branch আঁতৰাই দিয়া হৈছে যাতে সুস্থিৰ (stable) ভাৰ্চন ব্যৱহাৰ হয়
+# ইণ্টাৰনেটৰ অনুমতি (AI ৰ লগত কথা পাতিবলৈ)
+android.permissions = INTERNET
 
 # iOS
 ios.kivy_ios_url = https://github.com/kivy/kivy-ios
