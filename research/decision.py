@@ -3,17 +3,9 @@ class ResearchDecision:
     def __init__(self, ai_manager):
         self.ai = ai_manager
 
-    # =================================
-    # LOCAL DECISION
-    # =================================
-
     def local_decision(self, question):
 
         q = question.lower().strip()
-
-        # ---------------------------------
-        # Simple conversation
-        # ---------------------------------
 
         direct_words = [
             "hi",
@@ -38,10 +30,6 @@ class ResearchDecision:
         if q in direct_words:
             return "DIRECT"
 
-        # ---------------------------------
-        # Assamese simple conversation
-        # ---------------------------------
-
         direct_assamese = [
             "তোমাৰ নাম কি",
             "আপোনাৰ নাম কি",
@@ -53,10 +41,6 @@ class ResearchDecision:
 
         if q in direct_assamese:
             return "DIRECT"
-
-        # ---------------------------------
-        # Current / changing information
-        # ---------------------------------
 
         research_words = [
             "current",
@@ -75,19 +59,10 @@ class ResearchDecision:
         ]
 
         for word in research_words:
-
             if word in q:
                 return "RESEARCH"
 
-        # ---------------------------------
-        # Direct by default
-        # ---------------------------------
-
         return "DIRECT"
-
-    # =================================
-    # FINAL DECISION
-    # =================================
 
     def needs_research(self, question):
 
