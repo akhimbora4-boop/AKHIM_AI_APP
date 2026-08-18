@@ -18,10 +18,6 @@ class WebSearch:
             )
         }
 
-    # =================================
-    # CLEAN URL
-    # =================================
-
     def clean_url(self, url):
 
         if not url:
@@ -49,11 +45,6 @@ class WebSearch:
 
             return url
 
-
-    # =================================
-    # SOURCE / DOMAIN
-    # =================================
-
     def get_source(self, url):
 
         try:
@@ -70,11 +61,6 @@ class WebSearch:
         except Exception:
 
             return ""
-
-
-    # =================================
-    # HOMEPAGE FILTER
-    # =================================
 
     def is_homepage(self, url):
 
@@ -111,11 +97,6 @@ class WebSearch:
 
             return False
 
-
-    # =================================
-    # SEARCH
-    # =================================
-
     def search(
         self,
         query,
@@ -128,20 +109,9 @@ class WebSearch:
 
         try:
 
-            # ---------------------------------
-            # Current date context
-            # ---------------------------------
-
             today = datetime.now()
 
             current_year = today.year
-
-            current_date = today.strftime(
-                "%Y-%m-%d"
-            )
-
-            # Add date context for current
-            # information searches.
 
             q_lower = query.lower()
 
@@ -197,12 +167,6 @@ class WebSearch:
 
 
             if response.status_code != 200:
-
-                print(
-                    "Search failed:",
-                    response.status_code
-                )
-
                 return []
 
 
@@ -245,7 +209,6 @@ class WebSearch:
 
 
                 if not title or not link:
-
                     continue
 
 
@@ -262,7 +225,6 @@ class WebSearch:
 
 
                 if not raw_url:
-
                     continue
 
 
@@ -272,20 +234,6 @@ class WebSearch:
 
 
                 if not url_text:
-
-                    continue
-
-
-                parsed = urlparse(
-                    url_text
-                )
-
-
-                if parsed.scheme not in (
-                    "http",
-                    "https"
-                ):
-
                     continue
 
 
@@ -295,66 +243,32 @@ class WebSearch:
 
 
                 if not source:
-
                     continue
 
-
-                # ---------------------------------
-                # Block search engines
-                # ---------------------------------
 
                 if source in blocked_domains:
-
                     continue
-
 
                 if source.endswith(
                     "news.google.com"
                 ):
-
                     continue
-
 
                 if "duckduckgo.com" in source:
-
                     continue
-
-
-                # ---------------------------------
-                # Block obvious ads
-                # ---------------------------------
 
                 if "Ad Viewing ads" in title_text:
-
                     continue
-
-
-                # ---------------------------------
-                # Duplicate URL
-                # ---------------------------------
 
                 if url_text in seen_urls:
-
                     continue
-
-
-                # ---------------------------------
-                # Homepage/category
-                # ---------------------------------
 
                 if self.is_homepage(
                     url_text
                 ):
-
                     continue
 
-
-                # ---------------------------------
-                # Prefer different sources
-                # ---------------------------------
-
                 if source in seen_sources:
-
                     continue
 
 
@@ -404,19 +318,9 @@ class WebSearch:
             return results
 
 
-        except Exception as e:
-
-            print(
-                "Search error:",
-                e
-            )
+        except Exception:
 
             return []
-
-
-    # =================================
-    # DATE EXTRACTION
-    # =================================
 
     def extract_date(self, soup):
 
@@ -428,16 +332,9 @@ class WebSearch:
             "date",
             "pubdate",
             "publishdate",
-            "timestamp",
-            "DC.date",
-            "dc.date"
+            "timestamp"
 
         ]
-
-
-        # ---------------------------------
-        # Meta tags
-        # ---------------------------------
 
         for name in meta_names:
 
@@ -465,96 +362,12 @@ class WebSearch:
                     ""
                 )
 
-
                 if value:
 
                     return value.strip()
 
 
-        # ---------------------------------
-        # JSON-LD
-        # ---------------------------------
-
-        scripts = soup.find_all(
-            "script",
-            type="application/ld+json"
-        )
-
-
-        for script in scripts:
-
-            text = script.get_text(
-                strip=True
-            )
-
-
-            if "datePublished" not in text:
-
-                continue
-
-
-            try:
-
-                match = re.search(
-
-                    r'"datePublished"\s*:\s*"([^"]+)"',
-
-                    text
-
-                )
-
-
-                if match:
-
-                    return match.group(
-                        1
-                    )
-
-
-            except Exception:
-
-                pass
-
-
-        # ---------------------------------
-        # Time tag
-        # ---------------------------------
-
-        time_tag = soup.find(
-            "time"
-        )
-
-
-        if time_tag:
-
-            value = time_tag.get(
-                "datetime",
-                ""
-            )
-
-
-            if value:
-
-                return value.strip()
-
-
-            text = time_tag.get_text(
-                " ",
-                strip=True
-            )
-
-
-            if text:
-
-                return text
-
-
         return ""
-
-
-    # =================================
-    # FETCH PAGE
-    # =================================
 
     def fetch_page(self, url):
 
@@ -572,18 +385,10 @@ class WebSearch:
 
 
             if response.status_code != 200:
-
-                print(
-                    "Page status:",
-                    response.status_code
-                )
-
                 return {
-
                     "content": "",
                     "date": "",
                     "page_title": ""
-
                 }
 
 
@@ -596,10 +401,6 @@ class WebSearch:
             )
 
 
-            # ---------------------------------
-            # Page title
-            # ---------------------------------
-
             page_title = ""
 
             if soup.title:
@@ -610,18 +411,10 @@ class WebSearch:
                 )
 
 
-            # ---------------------------------
-            # Date
-            # ---------------------------------
-
             date = self.extract_date(
                 soup
             )
 
-
-            # ---------------------------------
-            # Remove unwanted elements
-            # ---------------------------------
 
             for tag in soup.find_all([
 
@@ -640,10 +433,6 @@ class WebSearch:
                 tag.decompose()
 
 
-            # ---------------------------------
-            # Extract article
-            # ---------------------------------
-
             article = soup.find(
                 "article"
             )
@@ -656,13 +445,11 @@ class WebSearch:
                     strip=True
                 )
 
-
             else:
 
                 main = soup.find(
                     "main"
                 )
-
 
                 if main:
 
@@ -683,8 +470,6 @@ class WebSearch:
                 text.split()
             )
 
-
-            # Limit source content
             text = text[:12000]
 
 
@@ -699,25 +484,17 @@ class WebSearch:
             }
 
 
-        except Exception as e:
-
-            print(
-                "Page fetch error:",
-                e
-            )
+        except Exception:
 
             return {
 
                 "content": "",
+
                 "date": "",
+
                 "page_title": ""
 
             }
-
-
-    # =================================
-    # RESEARCH
-    # =================================
 
     def research(
         self,
@@ -736,12 +513,6 @@ class WebSearch:
 
         for result in results:
 
-            print(
-                "Reading:",
-                result["title"]
-            )
-
-
             page = self.fetch_page(
                 result["url"]
             )
@@ -752,12 +523,10 @@ class WebSearch:
                 ""
             )
 
-
             result["date"] = page.get(
                 "date",
                 ""
             )
-
 
             result["page_title"] = page.get(
                 "page_title",
@@ -769,12 +538,6 @@ class WebSearch:
 
                 valid_results.append(
                     result
-                )
-
-            else:
-
-                print(
-                    "Skipped: no page content"
                 )
 
 
