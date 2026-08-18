@@ -11,7 +11,6 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-22.04
-    # এইটোৱেই সেই ব্ৰহ্মাষ্ট্ৰ যিয়ে pip ক 24+ লৈ যোৱাত বাধা দিব
     env:
       PIP_CONSTRAINT: ${{ github.workspace }}/constraint.txt
 
@@ -25,11 +24,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # ইয়াত আমি লক ফাইলটো তৈয়াৰ কৰিছোঁ
       - name: Set pip constraint to bypass open_rich_spinner bug
         run: echo "pip<24.0" > ${{ github.workspace }}/constraint.txt
 
-      # পুৰণি সকলো বেয়া ফাইল মচিবলৈ Cache v7 কৰা হ'ল
       - name: Cache Buildozer files
         uses: actions/cache@v4
         with:
@@ -47,6 +44,13 @@ jobs:
         run: |
           python3 -m pip install --upgrade "pip<24.0" setuptools
           python3 -m pip install --upgrade Cython==0.29.33 buildozer
+
+      - name: Inject API Keys into settings
+        run: |
+          echo 'GEMINI_API_KEYS = ["${{ secrets.GEMINI_API_KEYS }}"]' > config/settings.py
+          echo 'GROQ_API_KEYS = ["${{ secrets.GROQ_API_KEYS }}"]' >> config/settings.py
+          echo 'OPENROUTER_API_KEYS = ["${{ secrets.OPENROUTER_API_KEYS }}"]' >> config/settings.py
+          echo 'MISTRAL_API_KEYS = ["${{ secrets.MISTRAL_API_KEYS }}"]' >> config/settings.py
 
       - name: Build APK
         run: |
