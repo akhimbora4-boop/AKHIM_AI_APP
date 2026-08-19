@@ -1,8 +1,41 @@
+# ==========================================
+# AKHIM AI - Git Ignore
+# ==========================================
+
+# Buildozer
 .buildozer/
 bin/
+
+# Python cache
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Local configuration / API keys
 config/settings.py
 config/settings.local.py
-config/settings.local.py
+
+# Local database / memory
 *.db
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE / editor files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
