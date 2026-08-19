@@ -9,6 +9,7 @@ from kivy.metrics import dp
 from kivy.core.window import Window
 from threading import Thread
 import os
+import re
 
 # ==========================================
 # AKHIM AI CORE IMPORTS
@@ -47,59 +48,79 @@ verifier = ResearchVerifier()
 freshness = ResearchFreshness()
 ranker = ResearchRanker()
 
-# GitHub Action ৰ পৰা অহা assamese.ttf ফণ্টটো বিচাৰি উলিওৱা
-FONT_PATH = "assamese.ttf" if os.path.exists("assamese.ttf") else None
+# ফণ্ট ফাইলৰ নাম
+FONT_PATH = "assamese.ttf"
+
+# AI য়ে দিয়া **text** আৰু ### Heading বোৰ সলনি কৰা ফাংচন
+def convert_markdown_to_kivy(text):
+    text = re.sub(r'\*\*(.*?)\*\*', r'[b]\1[/b]', text)
+    text = re.sub(r'(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)', r'[i]\1[/i]', text)
+    text = re.sub(r'###\s*(.*)', r'[b][color=3498db]\1[/color][/b]', text)
+    text = re.sub(r'##\s*(.*)', r'[b][color=3498db]\1[/color][/b]', text)
+    text = re.sub(r'#\s*(.*)', r'[b][color=3498db]\1[/color][/b]', text)
+    return text
+
+# ==========================================
+# CUSTOM CHAT INPUT (For Assamese Keyboard)
+# ==========================================
+class ChatInput(TextInput):
+    def insert_text(self, substring, from_undo=False):
+        # 'Enter' বুটাম টিপিলে মেছেজটো ছেণ্ড হ'ব
+        if '\n' in substring:
+            app = App.get_running_app()
+            app.send_message(None)
+            return
+        super().insert_text(substring, from_undo=from_undo)
 
 
 class AkhimAIApp(App):
     def build(self):
-        # কীবৰ্ড ওলালে UI ওপৰলৈ উঠিবলৈ
         Window.softinput_mode = "below_target"
-        
-        # Dark theme background
         Window.clearcolor = (0.05, 0.05, 0.08, 1) 
 
         root = BoxLayout(orientation="vertical", padding=dp(10), spacing=dp(8))
 
-        # Header
         header = Label(
             text="[b][color=3498db]⚡[/color] AKHIM AI[/b]", 
             markup=True, 
             font_size=dp(22), 
             size_hint_y=None, 
-            height=dp(50)
+            height=dp(50),
+            font_name=FONT_PATH
         )
         root.add_widget(header)
 
-        # Chat Scroll View
         self.scroll = ScrollView(size_hint=(1, 0.83))
         self.chat = Label(
             text="[b]নমস্কাৰ! মই AKHIM AI।[/b]\nআপোনাক কি সহায় কৰিব পাৰোঁ?\n\n",
             font_size=dp(16), markup=True, halign="left", valign="top",
             size_hint_y=None, padding=(dp(10), dp(10)),
-            font_name=FONT_PATH if FONT_PATH else 'Roboto'
+            font_name=FONT_PATH
         )
         self.chat.bind(width=lambda *x: self.chat.setter('text_size')(self.chat, (self.chat.width - dp(20), None)))
         self.chat.bind(texture_size=self.chat.setter("size"))
         self.scroll.add_widget(self.chat)
         root.add_widget(self.scroll)
 
-        # Input Area (Bottom)
         bottom = BoxLayout(size_hint_y=None, height=dp(55), spacing=dp(8))
-        self.input_box = TextInput(
-            hint_text="Ask anything...", multiline=False, font_size=dp(16),
-            font_name=FONT_PATH if FONT_PATH else 'Roboto',
+        
+        # ইয়াত সাধাৰণ TextInput ৰ সলনি আমি বনোৱা ChatInput ব্যৱহাৰ কৰা হৈছে
+        self.input_box = ChatInput(
+            hint_text="Ask anything...", 
+            multiline=True,  # multiline True থকাৰ বাবে কীবৰ্ডত অসমীয়া switch ওলাব
+            font_size=dp(16),
+            font_name=FONT_PATH,
             background_color=(0.15, 0.15, 0.18, 1),
             foreground_color=(1, 1, 1, 1),
             cursor_color=(1, 1, 1, 1),
             padding=(dp(15), dp(15))
         )
-        self.input_box.bind(on_text_validate=self.send_message)
         
         self.send_btn = Button(
             text="SEND", size_hint_x=None, width=dp(85), bold=True,
             background_color=(0.18, 0.8, 0.44, 1),
-            color=(1, 1, 1, 1)
+            color=(1, 1, 1, 1),
+            font_name=FONT_PATH
         )
         self.send_btn.bind(on_press=self.send_message)
 
@@ -148,7 +169,9 @@ class AkhimAIApp(App):
                 answer = corrector.correct_and_answer(f"Current question: {corrected_question}")
 
             memory.save("assistant", answer)
-            Clock.schedule_once(lambda dt: self.update_chat_final(answer))
+            
+            formatted_answer = convert_markdown_to_kivy(answer)
+            Clock.schedule_once(lambda dt: self.update_chat_final(formatted_answer))
 
         except Exception as error:
             Clock.schedule_once(lambda dt: self.update_chat_final(f"Error: {str(error)}"))
