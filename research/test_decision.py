@@ -1,71 +1,60 @@
-from research.decision import ResearchDecision
+import re
 
-from ai.manager import AIManager
+class ResearchDecision:
+    def __init__(self, ai_manager):
+        self.ai = ai_manager
 
-from ai.gemini import GeminiAI
-from ai.groq import GroqAI
-from ai.openrouter import OpenRouterAI
-from ai.mistral import MistralAI
+    def local_decision(self, question):
+        q = question.lower().strip()
+        
+        # ==========================================
+        # ১. সাধাৰণ কথা-বতৰা (DIRECT - চাৰ্চ নকৰে)
+        # ==========================================
+        direct_matches = [
+            "hi", "hello", "hey", "how are you", "what is your name", 
+            "who are you", "who made you", "thanks", "thank you", "ok", 
+            "okay", "bye", "হাই", "হেল্ল", "তোমাৰ নাম কি", "আপোনাৰ নাম কি", 
+            "তুমি কেনে আছা", "আপুনি কেনে আছে", "ধন্যবাদ", "নমস্কাৰ"
+        ]
+        
+        if q in direct_matches:
+            return "DIRECT"
 
-from config.settings import (
-    GEMINI_API_KEYS,
-    GROQ_API_KEYS,
-    OPENROUTER_API_KEYS,
-    MISTRAL_API_KEYS
-)
+        # ==========================================
+        # ২. সৃষ্টিশীল কাম (DIRECT - চাৰ্চ নকৰে)
+        # ==========================================
+        creative_words = [
+            "write", "translate", "poem", "story", "essay", "code",
+            "লিখা", "অনুবাদ", "কবিতা", "গল্প", "ৰচনা", "ক'ড"
+        ]
+        for word in creative_words:
+            if word in q:
+                return "DIRECT"
 
+        # ==========================================
+        # ৩. প্ৰশ্ন আৰু তথ্য (RESEARCH - ইন্টাৰনেটত চাৰ্চ কৰিব)
+        # ==========================================
+        research_words = [
+            # ইংৰাজী শব্দ
+            "current", "latest", "recent", "today", "news", "present",
+            "update", "situation", "status", "who", "what", "where",
+            "when", "why", "how", "tell", "explain", "history",
+            "price", "weather", "details", "info", "about",
+            
+            # অসমীয়া শব্দ
+            "বৰ্তমান", "আজিৰ", "শেহতীয়া", "সাম্প্ৰতিক", "খবৰ", "অৱস্থা",
+            "কি", "কোন", "ক'ত", "কেতিয়া", "কিয়", "কেনেকৈ", "কেনেদৰে",
+            "বিষয়ে", "ইতিহাস", "দাম", "বতৰ", "কিমান", "কাৰ", "তথ্য",
+            "জনাওক", "বিৱৰণ"
+        ]
+        
+        for word in research_words:
+            if word in q:
+                return "RESEARCH"
 
-print("================================")
-print("   AKHIM AI DECISION TEST")
-print("================================")
+        # যদি ওপৰৰ এটাও নিয়ম নাখাটে, তেন্তে ডিফল্ট হিচাপে চাৰ্চ কৰিবলৈ পঠিয়াব
+        # যাতে কোনো নজনা প্ৰশ্ন সুধিলেও AI-য়ে ইন্টাৰনেটৰ পৰা বিচাৰি উলিয়াব পাৰে।
+        return "RESEARCH"
 
-
-gemini = GeminiAI(GEMINI_API_KEYS)
-
-groq = GroqAI(GROQ_API_KEYS)
-
-openrouter = OpenRouterAI(
-    OPENROUTER_API_KEYS
-)
-
-mistral = MistralAI(
-    MISTRAL_API_KEYS
-)
-
-
-ai = AIManager(
-    gemini,
-    groq,
-    openrouter,
-    mistral
-)
-
-
-decision = ResearchDecision(ai)
-
-
-questions = [
-    "Hi",
-    "What is your name?",
-    "What is the capital of Assam?",
-    "Who is the current Prime Minister of India?",
-    "What is the latest AI news?"
-]
-
-
-for question in questions:
-
-    print()
-    print("Question:", question)
-
-    if decision.needs_research(question):
-
-        print("Decision: RESEARCH")
-
-    else:
-
-        print("Decision: DIRECT")
-
-
-print()
-print("Decision test finished.")
+    def needs_research(self, question):
+        return self.local_decision(question) == "RESEARCH"
