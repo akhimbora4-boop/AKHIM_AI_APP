@@ -1,3 +1,6 @@
+import time
+import traceback
+
 from ai.gemini import GeminiAI
 from ai.groq import GroqAI
 from ai.openrouter import OpenRouterAI
@@ -11,139 +14,411 @@ from config.settings import (
 )
 
 
-print("================================")
-print("     AKHIM AI PROVIDER TEST")
-print("================================")
+# ============================================================
+# AKHIM AI — PROVIDER DIAGNOSTIC TEST
+# ============================================================
+
+print("=" * 60)
+print("              AKHIM AI PROVIDER TEST")
+print("=" * 60)
 print()
 
-
-question = "Say only: TEST OK"
-
-
-# --------------------------------
-# GEMINI
-# --------------------------------
-
-print("[1] Testing Gemini...")
-
-try:
-
-    gemini = GeminiAI(GEMINI_API_KEYS)
-
-    result = gemini.ask(question)
-
-    if result and "Error" not in result:
-        print("Gemini: ✅ WORKING")
-        print("Response:", result)
-
-    else:
-        print("Gemini: ❌ FAILED")
-        print(result)
-
-except Exception as e:
-
-    print("Gemini: ❌ FAILED")
-    print(e)
+QUESTION = "Say only: TEST OK"
 
 
-print()
+# ============================================================
+# HELPERS
+# ============================================================
+
+def normalize_keys(keys):
+    """
+    Convert API-key configuration into a clean list.
+    """
+
+    if keys is None:
+        return []
+
+    if isinstance(keys, str):
+        keys = [keys]
+
+    try:
+        return [
+            str(key).strip()
+            for key in keys
+            if str(key).strip()
+        ]
+    except Exception:
+        return []
 
 
-# --------------------------------
-# GROQ
-# --------------------------------
+def mask_key(key):
+    """
+    Hide API key in terminal output.
+    """
 
-print("[2] Testing Groq...")
+    if not key:
+        return "NONE"
 
-try:
+    if len(key) <= 8:
+        return "********"
 
-    groq = GroqAI(GROQ_API_KEYS)
-
-    result, error = groq.ask(question)
-
-    if result:
-
-        print("Groq: ✅ WORKING")
-        print("Response:", result)
-
-    else:
-
-        print("Groq: ❌ FAILED")
-        print(error)
-
-except Exception as e:
-
-    print("Groq: ❌ FAILED")
-    print(e)
-
-
-print()
-
-
-# --------------------------------
-# OPENROUTER
-# --------------------------------
-
-print("[3] Testing OpenRouter...")
-
-try:
-
-    openrouter = OpenRouterAI(
-        OPENROUTER_API_KEYS
+    return (
+        key[:4]
+        + "..."
+        + key[-4:]
     )
 
-    result, error = openrouter.ask(question)
 
-    if result:
+def print_keys(name, keys):
 
-        print("OpenRouter: ✅ WORKING")
-        print("Response:", result)
+    clean = normalize_keys(keys)
 
-    else:
-
-        print("OpenRouter: ❌ FAILED")
-        print(error)
-
-except Exception as e:
-
-    print("OpenRouter: ❌ FAILED")
-    print(e)
-
-
-print()
-
-
-# --------------------------------
-# MISTRAL
-# --------------------------------
-
-print("[4] Testing Mistral...")
-
-try:
-
-    mistral = MistralAI(
-        MISTRAL_API_KEYS
+    print(
+        f"{name} API keys : {len(clean)}"
     )
 
-    result, error = mistral.ask(question)
+    for index, key in enumerate(
+        clean,
+        start=1
+    ):
 
-    if result:
+        print(
+            f"   Key {index}: {mask_key(key)}"
+        )
 
-        print("Mistral: ✅ WORKING")
-        print("Response:", result)
+    if not clean:
+        print(
+            "   ⚠ No API keys configured."
+        )
+
+    print()
+
+
+def extract_result(response):
+
+    """
+    Provider methods may return:
+
+        result
+        (result, error)
+
+    Handle both safely.
+    """
+
+    if isinstance(response, tuple):
+
+        result = response[0] if len(response) > 0 else None
+        error = response[1] if len(response) > 1 else None
+
+        return result, error
+
+    return response, None
+
+
+def is_success(result):
+
+    if result is None:
+        return False
+
+    text = str(result).strip()
+
+    if not text:
+        return False
+
+    error_words = [
+        "error:",
+        "api error",
+        "authentication error",
+        "unauthorized",
+        "invalid api key",
+        "rate limit",
+        "failed"
+    ]
+
+    lower = text.lower()
+
+    for word in error_words:
+
+        if word in lower:
+            return False
+
+    return True
+
+
+# ============================================================
+# PROVIDER TEST
+# ============================================================
+
+def test_provider(
+    number,
+    name,
+    provider_class,
+    keys
+):
+
+    print("-" * 60)
+
+    print(
+        f"[{number}] Testing {name}..."
+    )
+
+    print()
+
+    clean_keys = normalize_keys(keys)
+
+    print(
+        f"Configured keys: {len(clean_keys)}"
+    )
+
+    if not clean_keys:
+
+        print(
+            f"{name}: ❌ FAILED"
+        )
+
+        print(
+            "Reason: No API keys configured."
+        )
+
+        print()
+
+        return False
+
+    start_time = time.time()
+
+    try:
+
+        provider = provider_class(
+            clean_keys
+        )
+
+        response = provider.ask(
+            QUESTION
+        )
+
+        result, error = extract_result(
+            response
+        )
+
+        elapsed = (
+            time.time()
+            - start_time
+        )
+
+        if is_success(result):
+
+            print(
+                f"{name}: ✅ WORKING"
+            )
+
+            print(
+                f"Response time: {elapsed:.2f}s"
+            )
+
+            print(
+                "Response:"
+            )
+
+            print(
+                str(result).strip()
+            )
+
+            return True
+
+        print(
+            f"{name}: ❌ FAILED"
+        )
+
+        print(
+            f"Response time: {elapsed:.2f}s"
+        )
+
+        if error:
+
+            print(
+                "Error:"
+            )
+
+            print(
+                str(error)
+            )
+
+        elif result:
+
+            print(
+                "Provider response:"
+            )
+
+            print(
+                str(result)
+            )
+
+        else:
+
+            print(
+                "Empty response."
+            )
+
+        return False
+
+    except Exception as error:
+
+        elapsed = (
+            time.time()
+            - start_time
+        )
+
+        print(
+            f"{name}: ❌ FAILED"
+        )
+
+        print(
+            f"Response time: {elapsed:.2f}s"
+        )
+
+        print(
+            "Exception:"
+        )
+
+        print(
+            str(error)
+        )
+
+        return False
+
+
+# ============================================================
+# SHOW CONFIGURATION
+# ============================================================
+
+print("API KEY CONFIGURATION")
+print("=" * 60)
+
+print_keys(
+    "Gemini",
+    GEMINI_API_KEYS
+)
+
+print_keys(
+    "Groq",
+    GROQ_API_KEYS
+)
+
+print_keys(
+    "OpenRouter",
+    OPENROUTER_API_KEYS
+)
+
+print_keys(
+    "Mistral",
+    MISTRAL_API_KEYS
+)
+
+
+# ============================================================
+# RUN TESTS
+# ============================================================
+
+results = {}
+
+
+results["Gemini"] = test_provider(
+    1,
+    "Gemini",
+    GeminiAI,
+    GEMINI_API_KEYS
+)
+
+print()
+
+
+results["Groq"] = test_provider(
+    2,
+    "Groq",
+    GroqAI,
+    GROQ_API_KEYS
+)
+
+print()
+
+
+results["OpenRouter"] = test_provider(
+    3,
+    "OpenRouter",
+    OpenRouterAI,
+    OPENROUTER_API_KEYS
+)
+
+print()
+
+
+results["Mistral"] = test_provider(
+    4,
+    "Mistral",
+    MistralAI,
+    MISTRAL_API_KEYS
+)
+
+
+# ============================================================
+# FINAL SUMMARY
+# ============================================================
+
+print()
+print("=" * 60)
+print("                 TEST SUMMARY")
+print("=" * 60)
+print()
+
+working = 0
+failed = 0
+
+for name, status in results.items():
+
+    if status:
+
+        print(
+            f"{name:<15} : ✅ WORKING"
+        )
+
+        working += 1
 
     else:
 
-        print("Mistral: ❌ FAILED")
-        print(error)
+        print(
+            f"{name:<15} : ❌ FAILED"
+        )
 
-except Exception as e:
-
-    print("Mistral: ❌ FAILED")
-    print(e)
+        failed += 1
 
 
 print()
-print("================================")
-print("       TEST FINISHED")
-print("================================")
+
+print(
+    f"Working providers : {working}"
+)
+
+print(
+    f"Failed providers  : {failed}"
+)
+
+print()
+
+if working > 0:
+
+    print(
+        "AKHIM AI has at least one "
+        "working AI provider."
+    )
+
+else:
+
+    print(
+        "⚠ No AI provider is working."
+    )
+
+print()
+
+print("=" * 60)
+print("                  TEST FINISHED")
+print("=" * 60)
